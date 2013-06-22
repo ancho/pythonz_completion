@@ -1,5 +1,4 @@
-_pythonz_complete()
-{
+_pythonz_complete(){
     local commands
 
     COMPREPLY=()
@@ -9,68 +8,96 @@ _pythonz_complete()
     types="cpython stackless pypy jython"
     commands="cleanup help install list uninstall update"
 
+    
     if [ $COMP_CWORD -eq 1 ]; then #pythonz
-
-        _pythonz_compreply $commands
+    
+      options="-h"
+      _pythonz_compreply $commands $options
 
     elif [ $COMP_CWORD -eq 2 ]; then #pythonz commands and options
 
-        case "${COMP_WORDS[COMP_CWORD-1]}" in
-
-            help)
-                commands=$( echo $commands | sed -e "s/help//g" )
-                _pythonz_compreply $commands
-                ;;
-
-            install)
-                options="-t"
-                _pythonz_available_versions
-                _pythonz_compreply $options $available_versions
-                ;;
-            uninstall)
-                options="-t"
-                _pythonz_installed_versions
-                _pythonz_compreply $options $installed_versions
-                ;;
-            *)
-                ;;
-        esac
+      command=${COMP_WORDS[COMP_CWORD-1]}
+      _pythonz_handle_command $command
 
     elif [ $COMP_CWORD -eq 3 ]; then #command-options
 
-
-        case "${COMP_WORDS[COMP_CWORD-1]}" in
-          -t)
-            _pythonz_compreply $types
-            ;;
-
-          *)
-            ;;
-        esac
+      command_option=${COMP_WORDS[COMP_CWORD-1]}
+      _pythonz_handle_command_option $command_option
 
     elif [ $COMP_CWORD -eq 4 ];then #handle commands after commands-options
 
       type=${COMP_WORDS[COMP_CWORD-1]}
       command=${COMP_WORDS[COMP_CWORD-3]}
-      
-      case "$command" in
-        install)
-          _pythonz_available_versions
-          _pythonz_compreply $available_versions
-          ;;
-        uninstall)
-          _pythonz_installed_versions
-          _pythonz_compreply $installed_versions
-          ;;
-        *)
-          ;;
-      esac
+      _pythonz_handle_command $command
+
     fi
     return 0
+  }
+
+_pythonz_handle_command(){
+  
+  command=$*
+
+  case "$command" in
+
+    help|-h)
+      commands=$( echo $commands | sed -e "s/help\|-h//g" )
+      _pythonz_compreply $commands
+      ;;
+
+    install)
+      options=""
+
+      if [ $COMP_CWORD -eq 2 ]; then
+        options="-t"
+      fi
+
+      _pythonz_install $options
+      ;;
+    uninstall)
+       options=""
+
+      if [ $COMP_CWORD -eq 2 ]; then
+        options="-t"
+      fi
+      
+      _pythonz_uninstall $options
+      ;;
+    *)
+      ;;
+  esac
 }
 
-_pythonz_available_versions()
-{
+_pythonz_handle_command_option(){
+
+  option=$1
+
+  case "$option" in
+    -t)
+      _pythonz_compreply $types
+      ;;
+
+    *)
+      ;;
+  esac
+}
+
+_pythonz_install(){
+  options=$*
+
+  _pythonz_available_versions
+  _pythonz_compreply $options $available_versions
+
+}
+
+_pythonz_uninstall(){
+  options=$*
+  
+  _pythonz_installed_versions
+  _pythonz_compreply $options $installed_versions
+}
+
+_pythonz_available_versions(){
     _pythonz_installed_regex
     _pythonz_known_versions
 
@@ -82,8 +109,7 @@ _pythonz_available_versions()
 
 }
 
-_pythonz_installed_versions()
-{
+_pythonz_installed_versions(){
     if [ -n "$1" ];then
       type=$1
     fi
@@ -91,8 +117,7 @@ _pythonz_installed_versions()
     installed_versions=$( pythonz list |egrep -i $type | sed -e "s/^.*$type-//gI" )
 }
 
-_pythonz_installed_regex()
-{
+_pythonz_installed_regex(){
     _pythonz_installed_versions
 
     installed_regex=""
@@ -102,8 +127,7 @@ _pythonz_installed_regex()
     fi
 }
 
-_pythonz_known_versions()
-{
+_pythonz_known_versions(){
     if [ -n "$1" ];then
       type=$1
     fi
@@ -111,8 +135,7 @@ _pythonz_known_versions()
     known_versions=$( pythonz list -a |sed -n -e "/$type/,/#.*:/p" |sed  -e "/#.*:/d" |awk '{print $1}' )
 }
 
-_pythonz_compreply()
-{
+_pythonz_compreply(){
     COMPREPLY=( $( compgen -W "$*" -- ${COMP_WORDS[COMP_CWORD]}) )
 }
 
