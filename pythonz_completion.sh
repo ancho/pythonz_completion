@@ -1,35 +1,35 @@
-_pythonz_complete(){
-    local option command commands type types options command_option
-    local available_versions installed_versions unique_versions installed_regex known_versions
 
+declare -A _pythonz_context
+
+_pythonz_complete(){
+    local option command commands type types types_regex command_option
+    local available_versions installed_versions unique_versions installed_regex known_versions
+    local logfile
+
+    logfile="/tmp/pythonz_completion.log"
     COMPREPLY=()
     
-    type="cpython"
-
     types="cpython stackless pypy jython"
     commands="cleanup help install list uninstall update"
-
     
-    if [ $COMP_CWORD -eq 1 ]; then #pythonz
     
-      options="-h"
-      _pythonz_compreply $commands $options
+    if [ $COMP_CWORD -eq 1 ]; then
+    
+      _pythonz_context["pythonz"]="-h"
+      _pythonz_compreply $commands ${_pythonz_context["pythonz"]}
 
-    elif [ $COMP_CWORD -eq 2 ]; then #pythonz commands and options
+    elif [ $COMP_CWORD -eq 2 ]; then 
 
+      _pythonz_context["type"]="cpython"
+      _pythonz_context["install"]="-t -f -v -h --run-tests --framework --universal --static"
+      _pythonz_context["uninstall"]="-t -h"
       command=${COMP_WORDS[COMP_CWORD-1]}
       _pythonz_handle_command $command
 
-    elif [ $COMP_CWORD -eq 3 ]; then #command-options
-
+    elif [ $COMP_CWORD -ge 3 ]; then
+      command=${COMP_WORDS[1]}
       command_option=${COMP_WORDS[COMP_CWORD-1]}
       _pythonz_handle_command_option $command_option
-
-    elif [ $COMP_CWORD -eq 4 ];then #handle commands after commands-options
-
-      type=${COMP_WORDS[COMP_CWORD-1]}
-      command=${COMP_WORDS[COMP_CWORD-3]}
-      _pythonz_handle_command $command
 
     fi
     return 0
@@ -47,22 +47,12 @@ _pythonz_handle_command(){
       ;;
 
     install)
-      options=""
 
-      if [ $COMP_CWORD -eq 2 ]; then
-        options="-t"
-      fi
-
-      _pythonz_install $options
+      _pythonz_install 
       ;;
     uninstall)
-       options=""
-
-      if [ $COMP_CWORD -eq 2 ]; then
-        options="-t"
-      fi
       
-      _pythonz_uninstall $options
+      _pythonz_uninstall 
       ;;
     *)
       ;;
@@ -73,28 +63,39 @@ _pythonz_handle_command_option(){
   option=$1
 
   case "$option" in
+    -h)
+      ;;
     -t)
+      _pythonz_update_command_options
       _pythonz_compreply $types
       ;;
-
+    cpython|stackless|pypy|jython)
+      _pythonz_context["type"]=$option
+      _pythonz_handle_command $command
+      ;;
     *)
+      _pythonz_update_command_options
+      _pythonz_handle_command $command
       ;;
   esac
 }
 
+_pythonz_update_command_options(){
+
+  _pythonz_context["$command"]=$( echo ${_pythonz_context["$command"]} |sed -e "s/$option/ /g" )
+}
+
 _pythonz_install(){
-  options=$*
 
   _pythonz_available_versions
-  _pythonz_compreply $options $available_versions
+  _pythonz_compreply ${_pythonz_context["install"]} $available_versions
 
 }
 
 _pythonz_uninstall(){
-  options=$*
   
   _pythonz_installed_versions
-  _pythonz_compreply $options $installed_versions
+  _pythonz_compreply ${_pythonz_context["uninstall"]} $installed_versions
 }
 
 _pythonz_available_versions(){
@@ -110,11 +111,10 @@ _pythonz_available_versions(){
 }
 
 _pythonz_installed_versions(){
-    if [ -n "$1" ];then
-      type=$1
+    type=${_pythonz_context["type"]}
+    if [ -n "$type" ]; then
+      installed_versions=$( pythonz list |egrep -i $type | sed -e "s/^.*$type-//gI" )
     fi
-
-    installed_versions=$( pythonz list |egrep -i $type | sed -e "s/^.*$type-//gI" )
 }
 
 _pythonz_installed_regex(){
@@ -128,11 +128,11 @@ _pythonz_installed_regex(){
 }
 
 _pythonz_known_versions(){
-    if [ -n "$1" ];then
-      type=$1
+    type=${_pythonz_context["type"]}
+    if [ -n "$type" ]; then
+      known_versions=$( pythonz list -a |sed -n -e "/$type/,/#.*:/p" |sed  -e "/#.*:/d" |awk '{print $1}' )
     fi
 
-    known_versions=$( pythonz list -a |sed -n -e "/$type/,/#.*:/p" |sed  -e "/#.*:/d" |awk '{print $1}' )
 }
 
 _pythonz_compreply(){
