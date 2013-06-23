@@ -87,15 +87,19 @@ _pythonz_handle_command_option(){
 
     --file)
       _pythonz_update_command_options
-      COMPREPLY=( $(compgen -f -- ${COMP_WORDS[COMP_CWORD]} ) )
-      compopt -o plusdirs
-      ;;
+      _pythonz_handle_file
+     ;;
     
     *)
       _pythonz_update_command_options
       _pythonz_handle_command $command
       ;;
   esac
+}
+
+_pythonz_handle_file(){
+  COMPREPLY=( $(compgen -f -- ${COMP_WORDS[COMP_CWORD]} ) )
+  compopt -o plusdirs
 }
 
 _pythonz_update_command_options(){
