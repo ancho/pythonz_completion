@@ -1,5 +1,6 @@
 _pythonz_complete(){
-    local commands
+    local option command commands type types options command_option
+    local available_versions installed_versions unique_versions installed_regex known_versions
 
     COMPREPLY=()
     
@@ -69,7 +70,6 @@ _pythonz_handle_command(){
 }
 
 _pythonz_handle_command_option(){
-
   option=$1
 
   case "$option" in
