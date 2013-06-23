@@ -20,7 +20,7 @@ _pythonz_complete(){
     elif [ $COMP_CWORD -eq 2 ]; then 
 
       _pythonz_context["type"]="cpython"
-      _pythonz_context["install"]="-t -f -v -h --run-tests --framework --universal --static --file"
+      _pythonz_context["install"]="-t -f -v -h --run-tests --framework --universal --static --file --url"
       _pythonz_context["uninstall"]="-t -h"
       _pythonz_context["cleanup"]="-a -h"
       _pythonz_context["list"]="-a -h"
@@ -88,8 +88,13 @@ _pythonz_handle_command_option(){
     --file)
       _pythonz_update_command_options
       _pythonz_handle_file
-     ;;
-    
+      ;;
+
+    --url)
+      _pythonz_update_command_options
+      _pythonz_handle_url
+      ;;
+
     *)
       _pythonz_update_command_options
       _pythonz_handle_command $command
@@ -100,6 +105,11 @@ _pythonz_handle_command_option(){
 _pythonz_handle_file(){
   COMPREPLY=( $(compgen -f -- ${COMP_WORDS[COMP_CWORD]} ) )
   compopt -o plusdirs
+}
+
+_pythonz_handle_url(){
+  COMPREPLY=( $(compgen -W "http:// https:// file:// ftp://" -- ${COMP_WORDS[COMP_CWORD]} ) )
+  compopt -o nospace
 }
 
 _pythonz_update_command_options(){
