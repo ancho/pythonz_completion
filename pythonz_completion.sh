@@ -23,6 +23,9 @@ _pythonz_complete(){
       _pythonz_context["type"]="cpython"
       _pythonz_context["install"]="-t -f -v -h --run-tests --framework --universal --static"
       _pythonz_context["uninstall"]="-t -h"
+      _pythonz_context["cleanup"]="-a -h"
+      _pythonz_context["list"]="-a -h"
+
       command=${COMP_WORDS[COMP_CWORD-1]}
       _pythonz_handle_command $command
 
@@ -54,6 +57,12 @@ _pythonz_handle_command(){
       
       _pythonz_uninstall 
       ;;
+    
+    list|cleanup)
+
+      _pythonz_compreply  ${_pythonz_context["$command"]}
+      ;;
+
     *)
       ;;
   esac
@@ -65,14 +74,17 @@ _pythonz_handle_command_option(){
   case "$option" in
     -h)
       ;;
+    
     -t)
       _pythonz_update_command_options
       _pythonz_compreply $types
       ;;
+    
     cpython|stackless|pypy|jython)
       _pythonz_context["type"]=$option
       _pythonz_handle_command $command
       ;;
+    
     *)
       _pythonz_update_command_options
       _pythonz_handle_command $command
