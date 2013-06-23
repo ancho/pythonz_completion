@@ -6,7 +6,6 @@ _pythonz_complete(){
     local available_versions installed_versions unique_versions installed_regex known_versions
     local logfile
 
-    logfile="/tmp/pythonz_completion.log"
     COMPREPLY=()
     
     types="cpython stackless pypy jython"
@@ -21,7 +20,7 @@ _pythonz_complete(){
     elif [ $COMP_CWORD -eq 2 ]; then 
 
       _pythonz_context["type"]="cpython"
-      _pythonz_context["install"]="-t -f -v -h --run-tests --framework --universal --static"
+      _pythonz_context["install"]="-t -f -v -h --run-tests --framework --universal --static --file"
       _pythonz_context["uninstall"]="-t -h"
       _pythonz_context["cleanup"]="-a -h"
       _pythonz_context["list"]="-a -h"
@@ -32,6 +31,7 @@ _pythonz_complete(){
     elif [ $COMP_CWORD -ge 3 ]; then
       command=${COMP_WORDS[1]}
       command_option=${COMP_WORDS[COMP_CWORD-1]}
+
       _pythonz_handle_command_option $command_option
 
     fi
@@ -84,6 +84,12 @@ _pythonz_handle_command_option(){
       _pythonz_context["type"]=$option
       _pythonz_handle_command $command
       ;;
+
+    --file)
+      _pythonz_update_command_options
+      COMPREPLY=( $(compgen -f -- ${COMP_WORDS[COMP_CWORD]} ) )
+      compopt -o plusdirs
+      ;;
     
     *)
       _pythonz_update_command_options
@@ -93,8 +99,10 @@ _pythonz_handle_command_option(){
 }
 
 _pythonz_update_command_options(){
-
-  _pythonz_context["$command"]=$( echo ${_pythonz_context["$command"]} |sed -e "s/$option/ /g" )
+  
+  if [[ $option == -* ]];then
+    _pythonz_context["$command"]=$( echo ${_pythonz_context["$command"]} |sed -e "s/$option/ /g" )
+  fi
 }
 
 _pythonz_install(){
