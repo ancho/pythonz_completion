@@ -1,4 +1,3 @@
-
 declare -A _pythonz_context
 
 _pythonz_complete(){
@@ -115,7 +114,7 @@ _pythonz_handle_url(){
 _pythonz_update_command_options(){
   
   if [[ $option == -* ]];then
-    _pythonz_context["$command"]=$( echo ${_pythonz_context["$command"]} |sed -e "s/$option/ /g" )
+    _pythonz_context["$command"]=$( echo ${_pythonz_context["$command"]} |sed -e "s/ /\n/g" |sed -e "s/^$option/ /" )
   fi
 }
 
