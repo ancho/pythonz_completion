@@ -146,7 +146,7 @@ _pythonz_available_versions(){
 _pythonz_installed_versions(){
     type=${_pythonz_context["type"]}
     if [ -n "$type" ]; then
-      installed_versions=$( pythonz list |egrep -i $type | sed -e "s/^.*$type-//gI" )
+      installed_versions=$( pythonz list |egrep -i $type | awk '{print tolower($0)}' | sed -e "s/^.*$type-//g" )
     fi
 }
 
